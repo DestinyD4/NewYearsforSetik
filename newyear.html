@@ -1,0 +1,939 @@
+<!doctype html>
+<html lang="ru">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+    <meta name="color-scheme" content="dark" />
+    <title>Новогодний сюрприз</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;500;700;800&family=Playfair+Display:wght@600;700&display=swap"
+        rel="stylesheet">
+
+    <style>
+        :root {
+            /* База */
+            --bg0: #060814;
+            --bg1: #0a1232;
+            --bg2: #071a1b;
+            --text: rgba(255, 255, 255, .92);
+            --muted: rgba(255, 255, 255, .72);
+
+            /* Акценты (сдержанный Новый год) */
+            --gold: #ffd08a;
+            --ice: #7be7ff;
+            --mint: #7bffbf;
+            --pink: #ff6fb1;
+
+            /* UI */
+            --card: rgba(255, 255, 255, .08);
+            --card2: rgba(255, 255, 255, .06);
+            --line: rgba(255, 255, 255, .14);
+            --line2: rgba(255, 255, 255, .20);
+            --shadow: 0 24px 80px rgba(0, 0, 0, .52);
+            --shadow2: 0 18px 55px rgba(0, 0, 0, .42);
+            --r: 18px;
+
+            --pad:
+                max(18px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) max(18px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
+            --maxw: 60rem;
+
+            --focus: 0 0 0 3px rgba(123, 231, 255, .30), 0 0 0 1px rgba(255, 255, 255, .22);
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        html,
+        body {
+            height: 100%;
+        }
+
+        body {
+            margin: 0;
+            color: var(--text);
+            font-family: Manrope, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+            overflow-x: hidden;
+
+            /* Фон: “ночь + северное сияние”, без цыганщины */
+            background:
+                radial-gradient(1100px 700px at 18% 12%, rgba(255, 208, 138, .18), transparent 60%),
+                radial-gradient(900px 650px at 82% 22%, rgba(123, 231, 255, .20), transparent 58%),
+                radial-gradient(1000px 760px at 58% 110%, rgba(123, 255, 191, .12), transparent 58%),
+                radial-gradient(780px 520px at 40% 45%, rgba(255, 111, 177, .10), transparent 60%),
+                linear-gradient(180deg, var(--bg0), var(--bg1));
+        }
+
+        /* Сияние/аура (мягкая плёнка поверх фона) */
+        body::before {
+            content: "";
+            position: fixed;
+            inset: -30vmax;
+            pointer-events: none;
+            background:
+                conic-gradient(from 210deg at 50% 50%,
+                    rgba(123, 231, 255, .10),
+                    rgba(255, 208, 138, .08),
+                    rgba(123, 255, 191, .08),
+                    rgba(255, 111, 177, .06),
+                    rgba(123, 231, 255, .10));
+            filter: blur(45px) saturate(1.1);
+            opacity: .65;
+            transform: translateZ(0);
+            animation: aurora 18s ease-in-out infinite alternate;
+        }
+
+        @keyframes aurora {
+            0% {
+                transform: translate3d(-1.5%, -1%, 0) rotate(-6deg);
+            }
+
+            100% {
+                transform: translate3d(1.5%, 1%, 0) rotate(6deg);
+            }
+        }
+
+        /* Снег: 3 слоя (чистый CSS, чуть “живее”) */
+        .snow::before,
+        .snow::after {
+            content: "";
+            position: fixed;
+            inset: -12vh -12vw;
+            pointer-events: none;
+            background-image:
+                radial-gradient(circle, rgba(255, 255, 255, .95) 1px, transparent 2px),
+                radial-gradient(circle, rgba(255, 255, 255, .75) 1px, transparent 2px),
+                radial-gradient(circle, rgba(255, 255, 255, .55) 1px, transparent 2px),
+                radial-gradient(circle, rgba(123, 231, 255, .22) 1px, transparent 3px);
+            background-size: 120px 120px, 190px 190px, 280px 280px, 420px 420px;
+            background-position: 0 0, 40px 60px, 90px 30px, 120px 220px;
+            opacity: .42;
+            filter: blur(.2px);
+            transform: translateZ(0);
+            animation: snowFall 16s linear infinite;
+        }
+
+        .snow::after {
+            opacity: .24;
+            filter: blur(.8px);
+            animation-duration: 26s;
+        }
+
+        @keyframes snowFall {
+            from {
+                transform: translate3d(0, -10vh, 0);
+            }
+
+            to {
+                transform: translate3d(0, 12vh, 0);
+            }
+        }
+
+        .wrap {
+            min-height: 100%;
+            padding: var(--pad);
+            display: grid;
+            place-items: center;
+        }
+
+        .app {
+            width: min(var(--maxw), 100%);
+            display: grid;
+            gap: 14px;
+        }
+
+        /* Верхняя панель */
+        .topbar {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 14px;
+        }
+
+        .brand {
+            display: flex;
+            gap: 12px;
+            align-items: flex-start;
+        }
+
+        .logo {
+            width: 44px;
+            height: 44px;
+            border-radius: 14px;
+            border: 1px solid rgba(255, 255, 255, .16);
+            background:
+                radial-gradient(12px 12px at 30% 28%, rgba(255, 255, 255, .28), transparent 60%),
+                linear-gradient(135deg, rgba(255, 208, 138, .26), rgba(123, 231, 255, .18));
+            box-shadow: var(--shadow2);
+            backdrop-filter: blur(10px);
+            display: grid;
+            place-items: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .logo::after {
+            content: "";
+            position: absolute;
+            inset: -40%;
+            background: linear-gradient(90deg, transparent 0 45%, rgba(255, 255, 255, .16) 45% 55%, transparent 55% 100%);
+            transform: rotate(22deg);
+            opacity: .35;
+        }
+
+        .logo svg {
+            width: 22px;
+            height: 22px;
+            opacity: .95;
+        }
+
+        .title {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            min-width: 0;
+        }
+
+        h1 {
+            margin: 0;
+            font-family: "Playfair Display", ui-serif, Georgia, serif;
+            font-size: clamp(24px, 3.2vw, 38px);
+            letter-spacing: .01em;
+            line-height: 1.08;
+        }
+
+        .sub {
+            color: var(--muted);
+            font-size: 14px;
+            line-height: 1.55;
+            max-width: 58ch;
+        }
+
+        .status {
+            display: grid;
+            gap: 8px;
+            align-items: end;
+            justify-items: end;
+            min-width: 180px;
+        }
+
+        .chip {
+            border: 1px solid var(--line);
+            background: rgba(255, 255, 255, .06);
+            border-radius: 999px;
+            padding: 10px 12px;
+            font-size: 13px;
+            color: rgba(255, 255, 255, .78);
+            white-space: nowrap;
+            backdrop-filter: blur(12px);
+            box-shadow: 0 10px 35px rgba(0, 0, 0, .28);
+        }
+
+        .bar {
+            width: 100%;
+            height: 10px;
+            border-radius: 999px;
+            border: 1px solid rgba(255, 255, 255, .14);
+            background: rgba(255, 255, 255, .05);
+            overflow: hidden;
+        }
+
+        .bar>i {
+            display: block;
+            height: 100%;
+            width: 0%;
+            border-radius: 999px;
+            background: linear-gradient(90deg, rgba(123, 231, 255, .85), rgba(255, 208, 138, .85));
+            box-shadow: 0 0 20px rgba(123, 231, 255, .22);
+            transition: width .25s ease;
+        }
+
+        /* Карточка основного контента */
+        .card {
+            border: 1px solid var(--line);
+            background: linear-gradient(180deg, rgba(255, 255, 255, .08), rgba(255, 255, 255, .06));
+            border-radius: calc(var(--r) + 2px);
+            box-shadow: var(--shadow);
+            backdrop-filter: blur(14px);
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* Мягкий “блик” сверху карточки */
+        .card::before {
+            content: "";
+            position: absolute;
+            inset: -40% -20% auto -20%;
+            height: 220px;
+            background: radial-gradient(closest-side, rgba(255, 255, 255, .14), transparent 70%);
+            pointer-events: none;
+        }
+
+        .hero {
+            padding: 18px 18px 10px;
+            display: grid;
+            gap: 10px;
+        }
+
+        .heroLine {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+        }
+
+        .hint {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            color: var(--muted);
+            font-size: 13px;
+            line-height: 1.5;
+        }
+
+        .badge {
+            display: inline-flex;
+            gap: 8px;
+            align-items: center;
+            padding: 8px 10px;
+            border-radius: 999px;
+            border: 1px solid rgba(255, 255, 255, .14);
+            background: rgba(10, 18, 50, .45);
+            backdrop-filter: blur(10px);
+            color: rgba(255, 255, 255, .82);
+            font-size: 12px;
+            white-space: nowrap;
+        }
+
+        .badgeDot {
+            width: 8px;
+            height: 8px;
+            border-radius: 999px;
+            background: rgba(255, 208, 138, .95);
+            box-shadow: 0 0 16px rgba(255, 208, 138, .28);
+        }
+
+        .controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 18px 18px;
+            border-top: 1px solid rgba(255, 255, 255, .08);
+        }
+
+        .btnRow {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            justify-content: flex-end;
+        }
+
+        .btn {
+            appearance: none;
+            border: 1px solid rgba(255, 255, 255, .16);
+            background: rgba(255, 255, 255, .08);
+            color: var(--text);
+            border-radius: 14px;
+            padding: 12px 14px;
+            cursor: pointer;
+            font: inherit;
+            font-weight: 700;
+            letter-spacing: .01em;
+            transition: transform .08s ease, background .15s ease, border-color .15s ease, filter .15s ease;
+            user-select: none;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn:hover {
+            background: rgba(255, 255, 255, .12);
+            border-color: rgba(255, 255, 255, .26);
+        }
+
+        .btn:active {
+            transform: translateY(1px);
+        }
+
+        .btn:focus-visible {
+            outline: none;
+            box-shadow: var(--focus);
+        }
+
+        .btn.primary {
+            border-color: rgba(123, 231, 255, .26);
+            background: linear-gradient(135deg, rgba(123, 231, 255, .16), rgba(255, 208, 138, .12));
+        }
+
+        .btn.secondary {
+            background: transparent;
+            color: rgba(255, 255, 255, .74);
+        }
+
+        .btn.ghost {
+            background: rgba(255, 255, 255, .05);
+            color: rgba(255, 255, 255, .82);
+        }
+
+        /* Сетка подарков */
+        .grid {
+            padding: 18px;
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px;
+        }
+
+        @media (max-width: 720px) {
+            .grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+
+            .status {
+                min-width: 140px;
+            }
+        }
+
+        @media (max-width: 520px) {
+            .grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .status {
+                display: none;
+            }
+        }
+
+        .gift {
+            position: relative;
+            border: 1px solid rgba(255, 255, 255, .14);
+            background: rgba(255, 255, 255, .06);
+            border-radius: 16px;
+            padding: 14px;
+            min-height: 86px;
+            display: grid;
+            gap: 8px;
+            align-content: center;
+            cursor: pointer;
+            overflow: hidden;
+            transition: transform .12s ease, background .18s ease, border-color .18s ease, box-shadow .18s ease;
+            text-align: left;
+            box-shadow: 0 10px 28px rgba(0, 0, 0, .18);
+            transform: translateZ(0);
+        }
+
+        /* “лента” */
+        .gift::before {
+            content: "";
+            position: absolute;
+            inset: -40% -40%;
+            background:
+                linear-gradient(90deg,
+                    transparent 0 44%,
+                    rgba(255, 255, 255, .14) 44% 56%,
+                    transparent 56% 100%);
+            transform: rotate(18deg);
+            opacity: .28;
+            pointer-events: none;
+        }
+
+        /* “снежная искра” */
+        .gift::after {
+            content: "";
+            position: absolute;
+            inset: auto -40% -40% auto;
+            width: 180px;
+            height: 180px;
+            background: radial-gradient(closest-side, rgba(123, 231, 255, .16), transparent 70%);
+            transform: rotate(-12deg);
+            opacity: .65;
+            pointer-events: none;
+        }
+
+        .gift:hover {
+            background: rgba(255, 255, 255, .09);
+            border-color: rgba(255, 255, 255, .24);
+            transform: translateY(-2px);
+            box-shadow: 0 16px 38px rgba(0, 0, 0, .25);
+        }
+
+        .gift:active {
+            transform: translateY(-1px);
+        }
+
+        .gift:focus-visible {
+            outline: none;
+            box-shadow: var(--focus);
+            border-color: rgba(123, 231, 255, .35);
+        }
+
+        .giftTop {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+        }
+
+        .gift .n {
+            font-weight: 800;
+            letter-spacing: .06em;
+            font-size: 11px;
+            color: rgba(255, 255, 255, .70);
+            text-transform: uppercase;
+        }
+
+        .tag {
+            font-size: 11px;
+            padding: 6px 8px;
+            border-radius: 999px;
+            border: 1px solid rgba(255, 255, 255, .14);
+            background: rgba(10, 18, 50, .42);
+            color: rgba(255, 255, 255, .72);
+            white-space: nowrap;
+        }
+
+        .gift .t {
+            font-size: 14px;
+            line-height: 1.35;
+            color: rgba(255, 255, 255, .92);
+        }
+
+        .gift.opened {
+            background: linear-gradient(135deg, rgba(123, 255, 191, .13), rgba(255, 208, 138, .10));
+            border-color: rgba(123, 255, 191, .28);
+        }
+
+        .gift.opened .tag {
+            border-color: rgba(123, 255, 191, .26);
+            color: rgba(255, 255, 255, .82);
+        }
+
+        .footer {
+            padding: 0 18px 18px;
+            color: rgba(255, 255, 255, .68);
+            font-size: 13px;
+            line-height: 1.6;
+        }
+
+        /* Модалка */
+        .modal {
+            position: fixed;
+            inset: 0;
+            display: none;
+            place-items: center;
+            padding: var(--pad);
+            background: rgba(0, 0, 0, .58);
+            backdrop-filter: blur(8px);
+            z-index: 10;
+        }
+
+        .modal.show {
+            display: grid;
+            animation: fadeIn .14s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+
+            to {
+                opacity: 1;
+            }
+        }
+
+        .modalBox {
+            width: min(38rem, 100%);
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, .18);
+            background:
+                radial-gradient(700px 300px at 20% 0%, rgba(255, 208, 138, .10), transparent 60%),
+                radial-gradient(700px 300px at 85% 10%, rgba(123, 231, 255, .10), transparent 60%),
+                rgba(12, 16, 30, .92);
+            box-shadow: var(--shadow);
+            overflow: hidden;
+            transform: translateY(6px) scale(.99);
+            animation: pop .18s ease-out forwards;
+        }
+
+        @keyframes pop {
+            to {
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        .modalHead {
+            padding: 14px 16px;
+            display: flex;
+            justify-content: space-between;
+            gap: 10px;
+            align-items: center;
+            border-bottom: 1px solid rgba(255, 255, 255, .10);
+        }
+
+        .modalHead strong {
+            font-size: 13px;
+            letter-spacing: .08em;
+            text-transform: uppercase;
+            color: rgba(255, 255, 255, .76);
+        }
+
+        .close {
+            border: 1px solid rgba(255, 255, 255, .16);
+            background: rgba(255, 255, 255, .06);
+            color: var(--text);
+            border-radius: 12px;
+            padding: 10px 12px;
+            cursor: pointer;
+            font: inherit;
+            font-weight: 800;
+            letter-spacing: .01em;
+        }
+
+        .close:hover {
+            background: rgba(255, 255, 255, .10);
+            border-color: rgba(255, 255, 255, .24);
+        }
+
+        .close:focus-visible {
+            outline: none;
+            box-shadow: var(--focus);
+        }
+
+        .modalBody {
+            padding: 16px;
+            display: grid;
+            gap: 10px;
+        }
+
+        .big {
+            font-size: 20px;
+            line-height: 1.4;
+            margin: 0;
+            font-weight: 800;
+            letter-spacing: .01em;
+        }
+
+        .small {
+            margin: 0;
+            color: rgba(255, 255, 255, .74);
+            line-height: 1.7;
+            font-size: 14px;
+        }
+
+        .modalActions {
+            padding: 0 16px 16px;
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+        }
+
+        /* Уважение к настройкам пользователя */
+        @media (prefers-reduced-motion: reduce) {
+            body::before {
+                animation: none;
+            }
+
+            .snow::before,
+            .snow::after {
+                animation: none;
+            }
+
+            .gift,
+            .btn,
+            .modalBox {
+                transition: none;
+                animation: none;
+            }
+        }
+    </style>
+</head>
+
+<body class="snow">
+    <div class="wrap">
+        <main class="app">
+            <header class="topbar">
+                <div class="brand">
+                    <div class="logo" aria-hidden="true">
+                        <!-- Мини-SVG, чтобы не тянуть картинки -->
+                        <svg viewBox="0 0 24 24" fill="none">
+                            <path
+                                d="M12 2c2.4 1.3 3.8 3.1 3.8 5.2 0 3-2.7 5-3.8 5-1.1 0-3.8-2-3.8-5C8.2 5.1 9.6 3.3 12 2Z"
+                                stroke="rgba(255,255,255,.92)" stroke-width="1.6" />
+                            <path d="M6 12.5c2.2 2.3 4.4 3.6 6 3.6s3.8-1.3 6-3.6" stroke="rgba(255,255,255,.78)"
+                                stroke-width="1.6" stroke-linecap="round" />
+                            <path d="M7.5 20.5h9" stroke="rgba(255,255,255,.70)" stroke-width="1.6"
+                                stroke-linecap="round" />
+                        </svg>
+                    </div>
+
+                    <div class="title">
+                        <h1>Новогодний сюрприз</h1>
+                        <div class="sub">
+                            Открывай подарочки. В каждом — маленькая правда про неё и про вас.
+                            Дизайн — праздничный, но без перегиба.
+                        </div>
+                    </div>
+                </div>
+
+                <div class="status">
+                    <div class="chip" id="progress">0/12 открыто</div>
+                    <div class="bar" aria-hidden="true"><i id="barFill"></i></div>
+                </div>
+            </header>
+
+            <section class="card" aria-label="Подарки">
+                <div class="hero">
+                    <div class="heroLine">
+                        <div class="hint">
+                            <span class="badge"><span class="badgeDot"></span> Открывай подарочки! Встречай итоги года?</span>
+                            <span class="badge">Открывай что хочешь и когда хочешь, милая</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="controls">
+                    <button class="btn secondary" id="backToIntro" type="button">← вернуться к архиву</button>
+
+                    <div class="btnRow">
+                        <button class="btn ghost" id="resetProgress" type="button" title="Сбросить прогресс">↺
+                            сброс</button>
+                        <button class="btn primary" id="randomGift" type="button">✨ открыть случайный</button>
+                        <button class="btn" id="openAll" type="button">⚡ открыть всё</button>
+                    </div>
+                </div>
+
+                <div class="grid" id="grid" role="list"></div>
+
+                <div class="footer">
+                    P.S. Я пытался сделать атмосферу нового года, но получилось как то странно, но плевать!!”.
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Модалка -->
+    <div class="modal" id="modal" aria-hidden="true">
+        <div class="modalBox" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+            <div class="modalHead">
+                <strong id="modalTitle">Подарок</strong>
+                <button class="close" id="closeModal" type="button">закрыть</button>
+            </div>
+
+            <div class="modalBody">
+                <p class="big" id="modalBig"></p>
+                <p class="small" id="modalSmall"></p>
+            </div>
+
+            <div class="modalActions">
+                <button class="btn secondary" id="nextGift" type="button">следующий →</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // === КОНТЕНТ ===
+    const gifts = [
+        {
+            big: "Лучшая кошка года 🐾",
+            small: "Ты такая милая и упрямася как кошечка, в хорошем смысле. Даже когда устаешь, остаешься собой. Очень это в тебе ценю."
+        },
+        {
+            big: "Ты как тёплый чай ☕",
+            small: "С тобой всегда спокойно. Лишь ты успокоишь меня, в самый сложный момент."
+        },
+        {
+            big: "Сильная, но не черствая 💪",
+            small: "За этот год, ты справилась с толькими задачами, трудностями и справляешься по сей день. Я горжусь тобой, лучик!"
+        },
+        {
+            big: "Твоя красота глубже внешности ✨",
+            small: "У тебя особенный стиль, который я не видел никогда прежде ни в ком другом. Исключительная и не забываемая, все это лишь про тебя"
+        },
+        {
+            big: "Мне правда повезло с тобой 🍀",
+            small: "Звучит просто, но я действительно рад, что ты мой партнер, что ты моя радость в этой жизни."
+        },
+        {
+            big: "Спасибо за твою прямоту 🤍",
+            small: "Даже когда страшно сказать правду, ты говоришь. Это не грубость, а зрелость."
+        },
+        {
+            big: "С тобой везде как дома 🕯️",
+            small: "С тобой, хоть в горы и ад, но везде где будешь ты, я буду ощущать себя как в самом уютном месте."
+        },
+        {
+            big: "Ты меня вдохновляешь 🎨",
+            small: "После общения с тобой хочется стать лучше: жить внимательнее, заботиться, создавать и расти как можно больше."
+        },
+        {
+            big: "Наши моменты бесценны 📸",
+            small: "Смешные, странные, милые, иногда полный бардак, но наш. Я бы не променял это ни на что."
+        },
+        {
+            big: "Ты умеешь меня рассмешить 🙂",
+            small: "Твой юмор прекрасен, и как мне приятно, когда он у нас сходится, с тобой я ощущаю себя так свободно в юморе."
+        },
+        {
+            big: "Я тебя люблю ❤️",
+            small: "Без всяких условий. Ты моя любовь, навсегда и всегда.."
+        },
+        {
+            big: "Мой праздник — это ты 🎄",
+            small: "С тобой появляется чувство, что впереди будет ещё лучше. И я хочу быть с тобой дальше."
+        },
+    ];
+
+
+        // === STATE (сохраняем прогресс) ===
+        const LS_KEY = "ny_gifts_opened_v2";
+
+        function loadOpened() {
+            try {
+                const raw = localStorage.getItem(LS_KEY);
+                const arr = raw ? JSON.parse(raw) : [];
+                return new Set(Array.isArray(arr) ? arr : []);
+            } catch {
+                return new Set();
+            }
+        }
+
+        function saveOpened() {
+            try {
+                localStorage.setItem(LS_KEY, JSON.stringify([...opened]));
+            } catch { }
+        }
+
+        let opened = loadOpened();
+
+        // === UI ===
+        const grid = document.getElementById('grid');
+        const progress = document.getElementById('progress');
+        const barFill = document.getElementById('barFill');
+
+        const modal = document.getElementById('modal');
+        const closeModal = document.getElementById('closeModal');
+        const modalTitle = document.getElementById('modalTitle');
+        const modalBig = document.getElementById('modalBig');
+        const modalSmall = document.getElementById('modalSmall');
+        const nextGiftBtn = document.getElementById('nextGift');
+
+        const openAllBtn = document.getElementById('openAll');
+        const randomGiftBtn = document.getElementById('randomGift');
+        const backToIntroBtn = document.getElementById('backToIntro');
+        const resetBtn = document.getElementById('resetProgress');
+
+        let lastOpenedIndex = null;
+
+        function updateProgressUI() {
+            const total = gifts.length;
+            const done = opened.size;
+
+            progress.textContent = `${done}/${total} открыто`;
+            const pct = total ? Math.round((done / total) * 100) : 0;
+            barFill.style.width = `${pct}%`;
+        }
+
+        function renderGrid() {
+            grid.innerHTML = "";
+
+            gifts.forEach((g, i) => {
+                const btn = document.createElement('button');
+                btn.type = "button";
+                btn.className = "gift" + (opened.has(i) ? " opened" : "");
+                btn.setAttribute("role", "listitem");
+                btn.setAttribute("aria-label", `Подарок ${i + 1}. ${opened.has(i) ? "Открыт" : "Закрыт"}`);
+
+                const stateText = opened.has(i) ? "открыт" : "нажми, чтобы открыть";
+                const tagText = opened.has(i) ? "открыт" : "закрыт";
+
+                btn.innerHTML = `
+          <div class="giftTop">
+            <div class="n">подарок #${String(i + 1).padStart(2, '0')}</div>
+            <div class="tag">${tagText}</div>
+          </div>
+          <div class="t">${stateText}</div>
+        `;
+
+                btn.addEventListener('click', () => openGift(i));
+                grid.appendChild(btn);
+            });
+
+            updateProgressUI();
+        }
+
+        function openGift(i) {
+            opened.add(i);
+            saveOpened();
+            renderGrid();
+
+            lastOpenedIndex = i;
+            const g = gifts[i];
+
+            modalTitle.textContent = `Подарок #${String(i + 1).padStart(2, '0')}`;
+            modalBig.textContent = g.big;
+            modalSmall.textContent = g.small;
+
+            modal.classList.add('show');
+            modal.setAttribute('aria-hidden', 'false');
+
+            // Удобство: фокус на кнопку закрытия
+            closeModal.focus({ preventScroll: true });
+        }
+
+        function close() {
+            modal.classList.remove('show');
+            modal.setAttribute('aria-hidden', 'true');
+        }
+
+        function openNext() {
+            if (lastOpenedIndex === null) return;
+            const next = (lastOpenedIndex + 1) % gifts.length;
+            openGift(next);
+        }
+
+        closeModal.addEventListener('click', close);
+        modal.addEventListener('click', (e) => { if (e.target === modal) close(); });
+        window.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') close();
+            if (modal.classList.contains('show') && e.key === 'Enter' && (document.activeElement === nextGiftBtn)) openNext();
+        });
+
+        nextGiftBtn.addEventListener('click', openNext);
+
+        openAllBtn.addEventListener('click', () => {
+            gifts.forEach((_, i) => opened.add(i));
+            saveOpened();
+            renderGrid();
+        });
+
+        randomGiftBtn.addEventListener('click', () => {
+            const closed = [];
+            for (let i = 0; i < gifts.length; i++) if (!opened.has(i)) closed.push(i);
+
+            const pool = closed.length ? closed : [...Array(gifts.length).keys()];
+            const pick = pool[Math.floor(Math.random() * pool.length)];
+            openGift(pick);
+        });
+
+        resetBtn.addEventListener('click', () => {
+            opened = new Set();
+            saveOpened();
+            renderGrid();
+            close();
+        });
+
+        backToIntroBtn.addEventListener('click', () => {
+            window.location.href = "./index.html";
+        });
+
+        renderGrid();
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,541 @@
+<!doctype html>
+<html lang="ru">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+    <meta name="color-scheme" content="dark" />
+    <title>Для тебя</title>
+
+    <!-- Минимально-аккуратный "кодовый" шрифт (CDN, без установок). Можно убрать и оставить системный monospace. -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;600&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --bg: #050608;
+            --fg: #e9e9ee;
+            --muted: rgba(233, 233, 238, .62);
+            --line: rgba(233, 233, 238, .18);
+            --line2: rgba(233, 233, 238, .28);
+            --pad: max(18px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) max(18px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
+            --maxw: 42rem;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        html,
+        body {
+            height: 100%;
+        }
+
+        body {
+            margin: 0;
+            background: var(--bg);
+            color: var(--fg);
+            font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+            overflow: hidden;
+            /* чтобы нельзя было “листануть” */
+        }
+
+        /* Fullscreen сцена */
+        .stage {
+            position: fixed;
+            inset: 0;
+            padding: var(--pad);
+            display: grid;
+            place-items: center;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        /* Контент-колонка по центру */
+        .panel {
+            width: min(var(--maxw), 100%);
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            align-items: stretch;
+        }
+
+        .topline {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            color: var(--muted);
+            font-size: 12px;
+            letter-spacing: .04em;
+        }
+
+        .counter {
+            border: 1px solid var(--line);
+            padding: 6px 10px;
+            border-radius: 0;
+            /* квадрат */
+            line-height: 1;
+            white-space: nowrap;
+        }
+
+        .hint {
+            opacity: .9;
+            white-space: nowrap;
+        }
+
+        /* “Терминал” без рамок (как ты просил — чистый экран), но с аккуратным разделителем */
+        .content {
+            min-height: 52svh;
+            /* стабильно на мобиле */
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            gap: 14px;
+            padding: 0;
+            border: none;
+        }
+
+        .typed {
+            font-size: clamp(16px, 2.5vw, 20px);
+            line-height: 1.6;
+            letter-spacing: 0.01em;
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+
+        .cursor {
+            display: inline-block;
+            width: 9px;
+            height: 1.2em;
+            margin-left: 2px;
+            border-left: 1px solid var(--fg);
+            transform: translateY(2px);
+            animation: blink 1s steps(1) infinite;
+            opacity: .85;
+        }
+
+        @keyframes blink {
+            50% {
+                opacity: 0;
+            }
+        }
+
+        .media {
+            width: 100%;
+            border: 1px solid var(--line);
+            border-radius: 0;
+            overflow: hidden;
+            background: rgba(255, 255, 255, .02);
+        }
+
+        .media img {
+            display: block;
+            width: 100%;
+            height: auto;
+            max-height: 52svh;
+            object-fit: cover;
+            filter: contrast(1.02);
+        }
+
+        .caption {
+            padding: 10px 12px;
+            border-top: 1px solid var(--line);
+            color: var(--muted);
+            font-size: 12px;
+            line-height: 1.5;
+        }
+
+        .actions {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            margin-top: 4px;
+        }
+
+        .btn {
+            appearance: none;
+            border: 1px solid var(--line2);
+            background: transparent;
+            color: var(--fg);
+            padding: 12px 14px;
+            border-radius: 0;
+            /* квадрат */
+            font: inherit;
+            letter-spacing: .02em;
+            cursor: pointer;
+            transition: transform .08s ease, border-color .15s ease, background .15s ease, opacity .15s ease;
+        }
+
+        .btn:active {
+            transform: translateY(1px);
+        }
+
+        .btn:hover {
+            border-color: rgba(233, 233, 238, .45);
+            background: rgba(255, 255, 255, .03);
+        }
+
+        .btn.secondary {
+            border-color: var(--line);
+            color: var(--muted);
+        }
+
+        .btn[disabled] {
+            opacity: .35;
+            cursor: not-allowed;
+        }
+
+        /* Невидимые зоны для тап-навигации (без лишних деталей) */
+        .tapzones {
+            position: fixed;
+            inset: 0;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            opacity: 0;
+            pointer-events: none;
+            /* включаем только после старта */
+        }
+
+        .tapzones.enabled {
+            pointer-events: auto;
+        }
+
+        .tapzone {}
+
+        /* Мягкие переходы слайдов */
+        .fade {
+            animation: fadeIn .22s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(4px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Уважение к тем, кто не любит анимации */
+        @media (prefers-reduced-motion: reduce) {
+            .cursor {
+                animation: none;
+                opacity: 0;
+            }
+
+            .fade {
+                animation: none;
+            }
+
+            .btn {
+                transition: none;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <main class="stage" id="stage">
+        <div class="panel">
+            <div class="topline">
+                <div class="hint" id="hint">тапни справа — дальше • слева — назад</div>
+                <div class="counter" id="counter">00/00</div>
+            </div>
+
+            <section class="content" id="content">
+                <div class="typed" id="typed"></div>
+            </section>
+
+            <div class="actions">
+                <button class="btn secondary" id="backBtn" disabled>назад</button>
+                <button class="btn" id="nextBtn" disabled>начать</button>
+            </div>
+        </div>
+    </main>
+
+    <!-- Невидимые зоны: левая половина экрана = назад, правая = дальше -->
+    <div class="tapzones" id="tapzones" aria-hidden="true">
+        <div class="tapzone" id="tapLeft"></div>
+        <div class="tapzone" id="tapRight"></div>
+    </div>
+
+    <script>
+        // ====== НАСТРОЙКИ СЛАЙДОВ ======
+        // type: "text" | "image"
+        // Для image: src = путь к картинке (лучше положить в папку /assets/)
+        const slides = [
+            {
+                type: "text",
+                // ВСТУП: печатается “как код”
+                text:
+                    `[system] Инициализация…
+[time] 31.12 → 01.01
+
+…привет.
+
+Новый год — это повод остановиться на минуту.
+Ты готова открыть подарок?`
+            },
+            {
+                type: "text",
+                text:
+                    `Если коротко:
+я очень тебя люблю.
+
+Если честно:
+я люблю тебя так, что это иногда даже пугает — в хорошем смысле.`
+            },
+            {
+                type: "image",
+                src: "assets/01_first_chat.jpg",
+                caption: "Наше первое знакомство. Точка, с которой всё поехало :)"
+            },
+            {
+                type: "image",
+                src: "assets/02_lf_dialog.jpg",
+                caption: "Первый диалог в ЛС. Я до сих умиляюсь с нас."
+            },
+            {
+                type: "image",
+                src: "assets/03_avatars.jpg",
+                caption: "Это мы с тобой кстати, веришь?"
+            },
+            {
+                type: "image",
+                src: "assets/04_game.jpg",
+                caption: "Счастливая семья: Ты, я и жестяночка"
+            },
+            {
+                type: "text",
+                text:
+                    `Я собрал это как маленький архив.
+Потому что из тысячи таких моментов строиться наше счастье,
+И я счастлив буду вспоминать их все вместе с тобой.
+
+Надеюсь, ты уже нашла письмо в подарке?.
+Там тоже немного моих стараний!.`
+            },
+            {
+                type: "text",
+                text:
+                    `Конец — это не конец.
+
+Просто…
+с Новым годом, любимая.
+
+[ok]`
+            }
+        ];
+
+        // ====== ЛОГИКА ======
+        const typedEl = document.getElementById('typed');
+        const contentEl = document.getElementById('content');
+        const nextBtn = document.getElementById('nextBtn');
+        const backBtn = document.getElementById('backBtn');
+        const counterEl = document.getElementById('counter');
+        const hintEl = document.getElementById('hint');
+
+        const tapzones = document.getElementById('tapzones');
+        const tapLeft = document.getElementById('tapLeft');
+        const tapRight = document.getElementById('tapRight');
+
+        let idx = 0;
+        let typing = false;
+        let typedDoneOnce = false;
+
+        const total = slides.length;
+
+        // Куда перейти после последнего слайда
+        const END_HREF = 'newyear.html';
+
+        function setCounter() {
+            const a = String(idx + 1).padStart(2, '0');
+            const b = String(total).padStart(2, '0');
+            counterEl.textContent = `${a}/${b}`;
+        }
+
+        function clearContent() {
+            contentEl.innerHTML = `<div class="typed" id="typed"></div>`;
+            // обновим ссылку на typed
+            const t = document.getElementById('typed');
+            return t;
+        }
+
+        function typeText(el, text, speed = 18) {
+            return new Promise((resolve) => {
+                typing = true;
+                nextBtn.disabled = true;
+                backBtn.disabled = (idx === 0);
+
+                el.textContent = "";
+                const cursor = document.createElement('span');
+                cursor.className = 'cursor';
+                el.appendChild(cursor);
+
+                let i = 0;
+                const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+                const effectiveSpeed = reduced ? 0 : speed;
+
+                function tick() {
+                    if (i < text.length) {
+                        // вставляем символ перед курсором
+                        cursor.insertAdjacentText('beforebegin', text[i]);
+                        i++;
+                        if (effectiveSpeed === 0) {
+                            // мгновенно
+                            continueTick();
+                        } else {
+                            setTimeout(tick, effectiveSpeed);
+                        }
+                    } else {
+                        // уберём курсор (можно оставить — но так чище)
+                        cursor.remove();
+                        typing = false;
+                        nextBtn.disabled = false;
+                        backBtn.disabled = (idx === 0);
+                        resolve();
+                    }
+                }
+
+                function continueTick() {
+                    // быстрая прокрутка без рекурсии таймеров
+                    while (i < text.length) {
+                        cursor.insertAdjacentText('beforebegin', text[i]);
+                        i++;
+                    }
+                    cursor.remove();
+                    typing = false;
+                    nextBtn.disabled = false;
+                    backBtn.disabled = (idx === 0);
+                    resolve();
+                }
+
+                tick();
+            });
+        }
+
+        function renderSlide(n) {
+            idx = Math.max(0, Math.min(total - 1, n));
+            setCounter();
+
+            // сбрасываем ссылку (на случай возврата с финала)
+            nextBtn.removeAttribute('data-href');
+
+            // кнопки
+            backBtn.disabled = (idx === 0);
+            nextBtn.textContent = (idx === 0 && !typedDoneOnce) ? "начать" : "дальше";
+
+            // контент
+            contentEl.classList.remove('fade');
+            void contentEl.offsetWidth; // reflow для перезапуска анимации
+            contentEl.classList.add('fade');
+
+            const slide = slides[idx];
+
+            // тап-зоны включаем после первого экрана (чтобы “начать” не срабатывало случайно)
+            tapzones.classList.toggle('enabled', idx > 0);
+
+            if (slide.type === "image") {
+                hintEl.textContent = "тапни справа — дальше • слева — назад";
+                nextBtn.disabled = false;
+
+                if (idx === total - 1) {
+                    nextBtn.textContent = "перейти дальше";
+                    nextBtn.dataset.href = END_HREF;
+                }
+
+                contentEl.innerHTML = `
+          <div class="media">
+            <img src="${slide.src}" alt="">
+            ${slide.caption ? `<div class="caption">${escapeHtml(slide.caption)}</div>` : ""}
+          </div>
+        `;
+            } else {
+                hintEl.textContent = (idx === 0) ? "после печати появится кнопка" : "тапни справа — дальше • слева — назад";
+
+                const newTypedEl = clearContent();
+                const text = slide.text || "";
+
+                // На первом экране — печать всегда (ультимативный “эффект старта”)
+                // На остальных — тоже печать, но можно сделать мгновенно: просто поставь speed=0
+                const speed = (idx === 0) ? 16 : 10;
+
+                typeText(newTypedEl, text, speed).then(() => {
+                    if (idx === 0) {
+                        typedDoneOnce = true;
+                        nextBtn.textContent = "начать";
+                    }
+                    else if (idx === total - 1) {
+                        nextBtn.textContent = "перейти дальше";
+                        nextBtn.dataset.href = END_HREF;
+                    }
+                    else {
+                        nextBtn.textContent = "дальше";
+                    }
+                });
+
+            }
+        }
+
+        function goNext() {
+            if (typing) return; // во время печати не перелистываем
+            if (idx === total - 1) {
+                // на последнем — переход на другой html
+                const href = nextBtn.dataset.href;
+                if (href) {
+                    window.location.href = href;
+                    return;
+                }
+
+                // fallback (если по какой-то причине ссылки нет)
+                typedDoneOnce = true;
+                renderSlide(0);
+                return;
+            }
+            renderSlide(idx + 1);
+        }
+
+        function goBack() {
+            if (typing) return;
+            renderSlide(idx - 1);
+        }
+
+        function escapeHtml(str) {
+            return String(str)
+                .replaceAll('&', '&amp;')
+                .replaceAll('<', '&lt;')
+                .replaceAll('>', '&gt;')
+                .replaceAll('"', '&quot;')
+                .replaceAll("'", "&#039;");
+        }
+
+        // Кнопки
+        nextBtn.addEventListener('click', goNext);
+        backBtn.addEventListener('click', goBack);
+
+        // Тап-зоны
+        tapRight.addEventListener('click', goNext);
+        tapLeft.addEventListener('click', goBack);
+
+        // Клавиатура (десктоп)
+        window.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowRight' || e.key === 'Enter' || e.key === ' ') goNext();
+            if (e.key === 'ArrowLeft') goBack();
+        }, { passive: true });
+
+        // Старт
+        setCounter();
+        // На первом экране кнопки недоступны, пока печатает
+        backBtn.disabled = true;
+        nextBtn.disabled = true;
+        renderSlide(0);
+    </script>
+</body>
+
+</html>
